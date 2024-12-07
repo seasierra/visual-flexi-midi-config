@@ -88,4 +88,53 @@
 			}
 		}
 	}
+
+	.background-title {
+		pointer-events: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+
+		figure {
+			@apply h-full w-full;
+		}
+
+		h1 {
+			max-width: 650px;
+			right: 0;
+			animation: slide-in alternate 2s ease-in-out;
+
+			text-decoration: overline;
+			font-style: normal;
+			text-align: right;
+			opacity: 0.2;
+			font-size: 13.9vh;
+
+			font-family: 'Gabarito', sans-serif;
+			font-optical-sizing: auto;
+			font-weight: 900;
+			font-style: normal;
+		}
+
+		img {
+			display: block;
+			width: 630px;
+			opacity: 0.1;
+			transform: scale(1.5);
+			position: absolute;
+			bottom: 0;
+			position: fixed;
+			left: -300px;
+			bottom: -4%;
+		}
+	}
+}
+@keyframes slide-in {
+	from {
+		padding-left: 660px;
+	}
+	to {
+		padding-left: 0px;
+	}
 }

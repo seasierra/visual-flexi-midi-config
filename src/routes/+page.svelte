@@ -1,64 +1,55 @@
 <script lang="ts">
 	import { ControllerBlockType, type ControllerBlock } from '$lib';
-	import type { MidiEvent } from '$lib/midi';
-	import ControllerRow from '../components/controller-row.svelte';
-	import ControllerSelector from '../components/controller-selector.svelte';
-	import IconKeys from '../components/icons/icon-keys.svelte';
-	import IconKnobs from '../components/icons/icon-knobs.svelte';
-	import IconPads from '../components/icons/icon-pads.svelte';
+	import { MIDI, type MidiEvent } from '$lib/midi';
+	import { SvelteMap } from 'svelte/reactivity';
+	import ControllerMap from '../components/controller-map.svelte';
+	import DebugInfo from '../components/debug-info.svelte';
+	import HeaderMenu from '../components/header-menu.svelte';
+	import Select from '../components/ui/select.svelte';
 
-	let currentEvent = $state<MidiEvent>();
+	const devices = MIDI.getDevices();
 
-	let blockMap = $state<ControllerBlock[]>([]);
+	let selectedDevice = $state<string>(null);
 
-	const handleAdd = (type: ControllerBlockType) => () => {
-		blockMap = [
-			...blockMap,
-			{
-				id: crypto.randomUUID(),
-				type,
-				size: null,
-				color: '#000000',
-				position: {
-					x: 0,
-					y: 0
-				}
+	let midiEvent = $state<MidiEvent>();
+	$effect(() => {
+		if (selectedDevice) {
+			MIDI.initDevice(selectedDevice, (e) => {
+				midiEvent = e;
+			});
+		}
+	});
+
+	let blockMap = $state<Map<string, ControllerBlock>>(new SvelteMap());
+
+	const addBlock = (type: ControllerBlockType) => {
+		const id = crypto.randomUUID();
+
+		blockMap.set(id, {
+			id,
+			type,
+			size: null,
+			color: '#000000',
+			position: {
+				x: 0,
+				y: 0
 			}
-		];
-	};
-
-	const handleChangeBlockSize = (id: string) => {
-		const target = event.target as HTMLInputElement;
-		const block = blockMap.find((block) => block.id === id);
-		if (!block) return;
-		block.size = parseInt(target.value);
-	};
-
-	const onRemove = (id: string) => {
-		blockMap = blockMap.filter((block) => block.id !== id);
+		});
 	};
 </script>
 
 <main class="px-28 pt-10">
-	<ControllerSelector bind:event={currentEvent} />
-	<header class="mb-12">
-		<h2 class="mb-2 text-xl font-black uppercase italic">Widgets</h2>
-		<nav class="flex gap-2 *:size-20 *:place-content-center">
-			<button class="icon-button" onclick={handleAdd(ControllerBlockType.KNOB)}
-				><IconKnobs />
-				<div class="button-backdrop"><span>Knobs</span></div></button
-			>
-			<button class="icon-button" onclick={handleAdd(ControllerBlockType.PAD)}
-				><IconPads /> <span>Pads</span>
-			</button>
-			<button class="icon-button" onclick={handleAdd(ControllerBlockType.KEY)}
-				><IconKeys /><span>Keys</span></button
-			>
-		</nav>
-	</header>
-	<section class="grid gap-5">
-		{#each blockMap as block (block.id)}
-			<ControllerRow {block} onAdd={handleChangeBlockSize} {onRemove} />
-		{/each}
-	</section>
+	<DebugInfo {midiEvent} />
+	<figure class="background-title fixed left-0 top-0">
+		<img src="/synth.bw.webp" alt="Background" />
+		<h1 class="absolute font-extrabold uppercase overline">VISUAL AUDIO CONTROL OVER CONFIG</h1>
+	</figure>
+	<HeaderMenu {addBlock}>
+		{#snippet deviceSelect()}
+			{#await devices then options}
+				<Select placeholder="Select device" bind:value={selectedDevice} {options} />
+			{/await}
+		{/snippet}
+	</HeaderMenu>
+	<ControllerMap bind:blockMap />
 </main>
